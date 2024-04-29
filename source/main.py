@@ -15,7 +15,6 @@ class main:
         screen_heigth : int = round(devise.current_h * 0.95)
         screen_size = (screen_width, screen_heigth)
         window = pyg.display.set_mode(screen_size)
-        window.fill((45 ,174 ,59))
         running = True
 
         KeyDown = []
