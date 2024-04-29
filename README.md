@@ -8,7 +8,7 @@
 
 ### The Core (main.py)
 
-The code has a base called the core which use for after implement mecanics. The core is the base of the code and it's content is write in the specifications (Cahier des charges), for more information go in the folder "Specifications". 
+The code has a base called the core which use for after implement mecanics. The core is the base of the code and it's content is write in the specifications (Cahier des charges), for more information go in the folder "Specifications".
 
 0N17 : Sometimes you can find "if True:" in the code. It may look strange, but I need it to hide the following code in the editor.
 
@@ -20,7 +20,12 @@ The code read in a json called "settings.json" for get the information necessary
 
 ```json
 {
-	"speed" : 1
+    "speed": 1,
+    "day": 60,
+    "night": 30,
+    "mecanics": {
+        "selfishness": false
+    }
 }
 ```
 
