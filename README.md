@@ -34,3 +34,12 @@ Developper : SkyDeveloppement
 ### The Mecanics
 
 The mecanics are the rules or addons of the core like the implementation of a cow which can be killed by two individu and these individu can be share this cow with equal portion or not ...
+
+### Void pygame programm
+
+0N17 : The programm "void_pygame_programm.py" is an empty pygame programm, a layer you can copy when you want to create a 
+    new pygame programm with threading
+
+    Class programm : 
+        here are all the globals vars (screen etc...) and all the Threads functions.
+        

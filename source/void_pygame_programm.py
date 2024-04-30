@@ -4,7 +4,6 @@ import pygame as pyg
 import threading as th
 import json
 from typing import *
-#import settings_edit
 import time
 
 class bouton() :
@@ -39,7 +38,7 @@ class bouton() :
         self.target_else = target
         self.args_else = args
         self.kwargs_else = kwargs
-
+        
 class Layer():
     def __init__(self) -> None:
         self.surf = pyg.Surface(main.screen_size, pyg.SRCALPHA)
@@ -111,7 +110,6 @@ class main():
                         elif event.button == 3 :
                             main.Mouse[1] = "up"
                         main.KeyUp.append(event.button)
-                        
             main.wait_next_tick.wait()
 
     def general_display():
