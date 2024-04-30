@@ -4,8 +4,9 @@ import pygame as pyg
 import threading as th
 import json
 from typing import *
-#import settings_edit
+import settings_edit
 import time
+
 
 class bouton() :
     def __init__(self, rect : pyg.Rect, target : Callable[..., None], *args, **kwargs) -> None:
@@ -51,6 +52,7 @@ class Layer():
 class main():
 
     if True: #Here are the global vars
+        #settings_edit.settings()
         pyg.init()
         devise = pyg.display.Info()
         screen_width : int = devise.current_w

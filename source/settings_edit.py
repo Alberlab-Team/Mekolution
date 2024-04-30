@@ -157,10 +157,9 @@ def settings():
             for key in self.jsonObject.keys():
                 self.keyList.addItem(key)
 
-    if __name__ == '__main__':
-        app = QApplication(sys.argv)
-        editor = JsonEditor()
-        editor.show()
-        sys.exit(app.exec())
+    app = QApplication(sys.argv)
+    editor = JsonEditor()
+    editor.show()
+    sys.exit(app.exec())
 
 settings()
