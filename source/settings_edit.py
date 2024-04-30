@@ -162,4 +162,3 @@ def settings():
     editor.show()
     sys.exit(app.exec())
 
-settings()
