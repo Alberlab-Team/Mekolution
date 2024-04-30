@@ -160,5 +160,5 @@ def settings():
     app = QApplication(sys.argv)
     editor = JsonEditor()
     editor.show()
-    sys.exit(app.exec())
+    app.exec()
 

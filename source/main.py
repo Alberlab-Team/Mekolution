@@ -1,12 +1,17 @@
 # 0N17
 
+from PySide6.QtWidgets import QApplication
+import sys
 import pygame as pyg
 import threading as th
 import json
 from typing import *
-import settings_edit
+from settings_edit import *
 import time
 
+settings()
+
+print("cc")
 
 class bouton() :
     def __init__(self, rect : pyg.Rect, target : Callable[..., None], *args, **kwargs) -> None:
