@@ -1,5 +1,5 @@
 # 0N17
-
+import os
 from PySide6.QtWidgets import QApplication
 import sys
 import pygame as pyg
@@ -9,9 +9,21 @@ from typing import *
 from settings_edit import *
 import time
 
-settings()
+tempVarfile = "TempVar.json"
 
-print("cc")
+with open("source/config/pack1/devVar.json", "r")as f:
+    Content = f.read()
+
+try:
+    os.remove(tempVarfile)
+    print(f"deleted file : {tempVarfile}")
+except:
+    pass
+
+with open(tempVarfile, "w+")as File:
+    File.write(Content)
+
+settings()
 
 class bouton() :
     def __init__(self, rect : pyg.Rect, target : Callable[..., None], *args, **kwargs) -> None:
@@ -57,7 +69,6 @@ class Layer():
 class main():
 
     if True: #Here are the global vars
-        #settings_edit.settings()
         pyg.init()
         devise = pyg.display.Info()
         screen_width : int = devise.current_w
@@ -76,7 +87,6 @@ class main():
     
     
     def Start():
-
         if True : #Before while
 
             main.layers = {
@@ -141,3 +151,9 @@ class functions():
 
 
 main.Start()
+
+try:
+    os.remove(tempVarfile)
+    print(f"deleted file : {tempVarfile}")
+except:
+    pass

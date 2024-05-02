@@ -6,6 +6,7 @@ import json
 from typing import *
 import time
 
+
 class bouton() :
     def __init__(self, rect : pyg.Rect, target : Callable[..., None], *args, **kwargs) -> None:
         self.rect = rect
