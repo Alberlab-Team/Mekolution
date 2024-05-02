@@ -25,6 +25,43 @@ with open(tempVarfile, "w+")as File:
 
 settings()
 
+class vector2():
+
+    def __init__(self, value : Tuple[float, float]) -> None:
+        self.x = value[0]
+        self.y = value[1]
+
+    def V0() -> "vector2" :
+        return vector2((0, 0))
+    
+    def tuple(self) -> Tuple[float, float]:
+        return (self.x, self.y)
+
+    def __add__(self, other : "vector2") :
+
+        return vector2((self.x + other.x, self.y + other.y))
+
+    def __sub__(self, other : "vector2") :
+
+        return vector2((self.x - other.x, self.y - other.y))
+
+    def __neg__(self):
+
+        return vector2.V0() - self
+    
+    def __mul__(self, other : float) :
+
+        return vector2((self.x * other, self.y * other))
+    
+    def __truediv__(self, other : float) :
+
+        return vector2((self.x / other, self.y / other))
+    
+    def __floordiv__(self, other : float) :
+
+        return vector2((self.x // other, self.y // other))
+
+
 class bouton() :
     def __init__(self, rect : pyg.Rect, target : Callable[..., None], *args, **kwargs) -> None:
         self.rect = rect
@@ -60,7 +97,7 @@ class bouton() :
 
 class Layer():
     def __init__(self) -> None:
-        self.surf = pyg.Surface(main.screen_size, pyg.SRCALPHA)
+        self.surf = pyg.Surface(main.screen_size.tuple(), pyg.SRCALPHA)
         self.rect = self.surf.get_rect()
     
     def add(self):
@@ -73,8 +110,8 @@ class main():
         devise = pyg.display.Info()
         screen_width : int = devise.current_w
         screen_heigth : int = round(devise.current_h * 0.95)
-        screen_size = (screen_width, screen_heigth)
-        window = pyg.display.set_mode(screen_size)
+        screen_size = vector2((screen_width, screen_heigth))
+        window = pyg.display.set_mode(screen_size.tuple())
         running = True
 
         KeyDown = []
@@ -84,14 +121,20 @@ class main():
         wait_next_tick = th.Event()
 
         layers : Dict[str, Layer]
-    
-    
+
+        JP_surf = pyg.transform.scale(pyg.image.load("source/picture/simulation/JP.png"), (screen_width/45, screen_heigth/15))
+
     def Start():
         if True : #Before while
 
             main.layers = {
-                "void" : Layer()
+                "hutte" : Layer()
             }
+            
+            hutte = pyg.transform.scale(pyg.image.load("source/picture/simulation/Hutte.png"), (main.screen_width/10, main.screen_heigth/10))
+            hutte_rect = hutte.get_rect()
+            hutte_rect.move_ip(((main.screen_size - vector2(hutte.get_size()))//2).tuple())
+            main.layers["hutte"].surf.blit(hutte, hutte_rect)
 
             if True : #Threads
                 tick = th.Thread(target=main.ticking)
@@ -99,9 +142,6 @@ class main():
 
                 display = th.Thread(target=main.general_display)
                 display.start()
-
-
-
 
         while main.running : 
 
@@ -128,12 +168,12 @@ class main():
                         elif event.button == 3 :
                             main.Mouse[1] = "up"
                         main.KeyUp.append(event.button)
-                        
+            
             main.wait_next_tick.wait()
 
     def general_display():
         while main.running:
-            main.window.fill((35, 175, 59))
+            main.window.fill((115, 192, 21))
             for key in list(main.layers.keys()):
                 main.layers[key].add()
             pyg.display.flip()
@@ -149,6 +189,10 @@ class functions():
         for i in range(time):
             main.wait_next_tick.wait()
 
+    def get_a_JP():
+        JP = pyg.Surface(main.JP_surf.get_size(), pyg.SRCALPHA)
+        JP.blit(main.JP_surf, main.JP_surf.get_rect())
+        return JP
 
 main.Start()
 
