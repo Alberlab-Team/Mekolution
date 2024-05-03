@@ -61,9 +61,9 @@ class vector2():
 
         return vector2((self.x // other, self.y // other))
 
-
-class bouton() :
-    def __init__(self, rect : pyg.Rect, target : Callable[..., None], *args, **kwargs) -> None:
+class button():
+    def __init__(self, surf : pyg.surface,  rect : pyg.Rect, target : Callable[..., None], *args, **kwargs) -> None:
+        self.surf = surf
         self.rect = rect
 
         self.target_if : Callable[..., None] = target
@@ -74,7 +74,7 @@ class bouton() :
         self.args_else : tuple
         self.kwargs_else : dict
 
-        self.thread = th.Thread(target = bouton._while, args=(self,))
+        self.thread = th.Thread(target = button._while, args=(self,))
         self.thread.start()
 
     def _while(self):
@@ -103,6 +103,19 @@ class Layer():
     def add(self):
         main.window.blit(self.surf, self.rect)
 
+class JP_caracteristics():
+    def __init__(self) -> None:
+        pass
+
+class JP():
+    def __init__(self, caracteristics : JP_caracteristics = JP_caracteristics()) -> None:
+        self.surf = functions.get_a_JP()
+        self.rect = self.surf.get_rect()
+        self.caracteristics = caracteristics
+
+    def move(self, pos : vector2):
+        self.rect.move_ip(pos.tuple())
+
 class main():
 
     if True: #Here are the global vars
@@ -123,12 +136,19 @@ class main():
         layers : Dict[str, Layer]
 
         JP_surf = pyg.transform.scale(pyg.image.load("source/picture/simulation/JP.png"), (screen_width/45, screen_heigth/15))
+        Buttons : Dict[str, button] = {}
+        ActiveButtons : List[button] = []
+        list_of_JP : List[JP] = []
+
+        #with open("source/")
 
     def Start():
         if True : #Before while
 
             main.layers = {
-                "hutte" : Layer()
+                "buttons" : Layer(),
+                "hutte" : Layer(),
+                "JPs" : Layer()
             }
             
             hutte = pyg.transform.scale(pyg.image.load("source/picture/simulation/Hutte.png"), (main.screen_width/10, main.screen_heigth/10))
@@ -142,6 +162,12 @@ class main():
 
                 display = th.Thread(target=main.general_display)
                 display.start()
+
+                display_buttons = th.Thread(target=main.button_display)
+                display_buttons.start()
+                
+                display_JP = th.Thread(target=main.JP_display)
+                display_JP.start()
 
         while main.running : 
 
@@ -179,6 +205,22 @@ class main():
             pyg.display.flip()
             main.wait_next_tick.wait()   
     
+    def button_display():
+        while main.running:
+            void_layer = Layer()
+            for this_button in main.ActiveButtons:
+                void_layer.surf.blit(this_button.surf, this_button.rect)
+            main.layers["buttons"] = Layer()
+            main.layers["buttons"].surf.blit(void_layer.surf, void_layer.rect)
+
+    def JP_display():
+        while main.running:
+            void_layer = Layer()
+            for this_JP in main.list_of_JP:
+                void_layer.surf.blit(this_JP.surf, this_JP.rect)
+            main.layers["JPs"] = Layer()
+            main.layers["JPs"].surf.blit(void_layer.surf, void_layer.rect)
+
     def ticking():
         while main.running:
             time.sleep(0.1)

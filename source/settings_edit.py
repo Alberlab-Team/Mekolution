@@ -40,13 +40,13 @@ def settings():
             self.searchBar.textChanged.connect(self.searchKey)
             self.setWindowIcon(QIcon('source/picture/icon/icon_settings.png'))
             # Boutons
-            self.NewSheetButton = QPushButton('Créer JSON')
+            self.NewSheetButton = QPushButton('Créer une nouvelle setting sheet')
             self.NewSheetButton.clicked.connect(self.NewJson)
 
-            self.loadButton = QPushButton('Charger JSON')
+            self.loadButton = QPushButton('Charger une setting sheet')
             self.loadButton.clicked.connect(self.loadJson)
 
-            self.saveButton = QPushButton('Sauvegarder JSON')
+            self.saveButton = QPushButton('Sauvegarder la setting sheet')
             self.saveButton.clicked.connect(self.saveJson)
 
             self.editButton = QPushButton('Changer la valeur')
@@ -146,6 +146,7 @@ def settings():
                     self.jsonObject = json.load(file)
                     self.textEdit.setText(json.dumps(self.jsonObject, indent=4))
                     self.populateList()
+                #with open("TempVar.json", 'w') as file:
 
         def saveJson(self):
             fileName, _ = QFileDialog.getSaveFileName(self, "Sauvegarder fichier JSON", "", "JSON Files (*.json)")

@@ -1,8 +1,9 @@
 {
     "speed": 1,
-    "day": 60,
-    "night": 30,
+    "day_time": 60,
+    "night_time": 5,
     "mecanics": {
         "selfishness": false
-    }
+    },
+    "base_selfishness" : 50
 }
