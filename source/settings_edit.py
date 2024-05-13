@@ -139,14 +139,18 @@ def settings():
                     basecontent
                 )
 
-        def loadJson(self):
+        def loadJson(self, isNew = False, file=None):
             fileName, _ = QFileDialog.getOpenFileName(self, "Ouvrir fichier JSON", "", "JSON Files (*.json)")
+            with open('TempVar.json', 'r') as File:
+                Globalr = json.load(File)
+                Globalr['setting_sheet_path'] = fileName
+                with open('TempVar.json', 'w') as Globalw:
+                    json.dump(Globalr, Globalw)
             if fileName:
                 with open(fileName, 'r', encoding='utf-8') as file:
                     self.jsonObject = json.load(file)
                     self.textEdit.setText(json.dumps(self.jsonObject, indent=4))
                     self.populateList()
-                #with open("TempVar.json", 'w') as file:
 
         def saveJson(self):
             fileName, _ = QFileDialog.getSaveFileName(self, "Sauvegarder fichier JSON", "", "JSON Files (*.json)")

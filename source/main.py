@@ -23,7 +23,20 @@ except:
 with open(tempVarfile, "w+")as File:
     File.write(Content)
 
-settings()
+Can_Start = False
+Settings = None
+while not Can_Start:
+    settings()
+    try : 
+        with open(tempVarfile, "r") as varFile:
+            path = json.load(varFile)["setting_sheet_path"]
+            if path[:-5] == ".json":
+                with open(path, "r") as SettingsFile:
+                    Settings = json.load(SettingsFile)
+    except:
+        pass
+
+print(Settings)
 
 class vector2():
 
@@ -235,7 +248,6 @@ class functions():
         JP = pyg.Surface(main.JP_surf.get_size(), pyg.SRCALPHA)
         JP.blit(main.JP_surf, main.JP_surf.get_rect())
         return JP
-
 main.Start()
 
 try:
