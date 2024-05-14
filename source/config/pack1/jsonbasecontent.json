@@ -2,8 +2,9 @@
     "speed": 1,
     "day_time": 60,
     "night_time": 5,
+    "night" : true,
     "mecanics": {
-        "selfishness": false
-    },
-    "base_selfishness" : 50
+        "selfishness": false,
+        "base_selfishness" : 50
+    }
 }

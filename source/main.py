@@ -1,6 +1,5 @@
 # 0N17
 import os
-from PySide6.QtWidgets import QApplication
 import sys
 import pygame as pyg
 import threading as th
@@ -23,20 +22,15 @@ except:
 with open(tempVarfile, "w+")as File:
     File.write(Content)
 
-Can_Start = False
-Settings = None
-while not Can_Start:
-    settings()
-    try : 
-        with open(tempVarfile, "r") as varFile:
-            path = json.load(varFile)["setting_sheet_path"]
-            if path[:-5] == ".json":
-                with open(path, "r") as SettingsFile:
-                    Settings = json.load(SettingsFile)
-    except:
-        pass
 
-print(Settings)
+Settings = None
+
+settings()
+with open(tempVarfile, "r") as varFile:
+    path = json.load(varFile)["setting_sheet_path"]
+    with open(path, "r") as SettingsFile:
+        Settings = json.load(SettingsFile)
+
 
 class vector2():
 
