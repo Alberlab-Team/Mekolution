@@ -3,8 +3,8 @@
     "day_time": 60,
     "night_time": 5,
     "night" : true,
-    "mecanics": {
-        "selfishness": false,
+    "selfishness": {
+        "activated": false,
         "base_selfishness" : 50
     }
 }

@@ -24,13 +24,15 @@ with open(tempVarfile, "w+")as File:
 
 
 Settings = None
-
 settings()
 with open(tempVarfile, "r") as varFile:
     path = json.load(varFile)["setting_sheet_path"]
+    if path is None:
+        path = "source/config/pack1/jsonbasecontent.json"
     with open(path, "r") as SettingsFile:
         Settings = json.load(SettingsFile)
 
+print(Settings)
 
 class vector2():
 
@@ -114,14 +116,24 @@ class JP_caracteristics():
     def __init__(self) -> None:
         pass
 
-class JP():
-    def __init__(self, caracteristics : JP_caracteristics = JP_caracteristics()) -> None:
-        self.surf = functions.get_a_JP()
-        self.rect = self.surf.get_rect()
-        self.caracteristics = caracteristics
+class Sprite() :
+    def __init__(self, surf : pyg.Surface) -> None:
+        self.surf = functions.re_get_surf(surf)
+        self.base_rect = self.surf.get_rect()
+        self.pos = vector2.V0()
+        self.rect = self.base_rect
 
     def move(self, pos : vector2):
-        self.rect.move_ip(pos.tuple())
+        self.pos = pos
+        self.rect = self.base_rect.move(pos.tuple())
+        
+
+class JP():
+    def __init__(self, caracteristics : JP_caracteristics = JP_caracteristics()) -> None:
+        self.sprite = Sprite(functions.get_a_JP())
+        self.sprite.move((main.screen_size/2) - (vector2(self.sprite.base_rect.size)/2))
+        self.caracteristics = caracteristics
+
 
 class main():
 
@@ -141,41 +153,47 @@ class main():
         wait_next_tick = th.Event()
 
         layers : Dict[str, Layer]
-
+        Carrot_surf = pyg.transform.scale(pyg.image.load("source/picture/simulation/carrot.png"), (screen_width/45, screen_heigth/15))
         JP_surf = pyg.transform.scale(pyg.image.load("source/picture/simulation/JP.png"), (screen_width/45, screen_heigth/15))
         Buttons : Dict[str, button] = {}
         ActiveButtons : List[button] = []
         list_of_JP : List[JP] = []
-
-        #with open("source/")
+        lsit_of_carrots : List[Sprite] = []
 
     def Start():
         if True : #Before while
 
             main.layers = {
                 "buttons" : Layer(),
+                "carrots" : Layer(),
+                "JPs" : Layer(),
                 "hutte" : Layer(),
-                "JPs" : Layer()
             }
-            
             hutte = pyg.transform.scale(pyg.image.load("source/picture/simulation/Hutte.png"), (main.screen_width/10, main.screen_heigth/10))
             hutte_rect = hutte.get_rect()
             hutte_rect.move_ip(((main.screen_size - vector2(hutte.get_size()))//2).tuple())
             main.layers["hutte"].surf.blit(hutte, hutte_rect)
 
-            if True : #Threads
-                tick = th.Thread(target=main.ticking)
-                tick.start()
+            main.list_of_JP.append(JP())
 
-                display = th.Thread(target=main.general_display)
-                display.start()
+        if True : # While Threads
+            tick = th.Thread(target=main.ticking)
+            tick.start()
 
-                display_buttons = th.Thread(target=main.button_display)
-                display_buttons.start()
-                
-                display_JP = th.Thread(target=main.JP_display)
-                display_JP.start()
+            display = th.Thread(target=main.general_display)
+            display.start()
 
+            display_buttons = th.Thread(target=main.button_display)
+            display_buttons.start()
+            
+            display_JP = th.Thread(target=main.JP_display)
+            display_JP.start()
+
+            display_carrots = th.Thread(target=main.carrot_display)
+            display_carrots.start()
+
+            #Remember that the following while is another thread, the main thread
+            
         while main.running : 
 
             if True: #interactions
@@ -228,6 +246,14 @@ class main():
             main.layers["JPs"] = Layer()
             main.layers["JPs"].surf.blit(void_layer.surf, void_layer.rect)
 
+    def carrot_display():
+        while main.running:
+            void_layer = Layer()
+            for this_carrot in main.lsit_of_carrots:
+                void_layer.surf.blit(this_carrot.surf, this_carrot.rect)
+            main.layers["carrots"] = Layer()
+            main.layers["carrots"].surf.blit(void_layer.surf, void_layer.rect)
+
     def ticking():
         while main.running:
             time.sleep(0.1)
@@ -239,9 +265,38 @@ class functions():
             main.wait_next_tick.wait()
 
     def get_a_JP():
-        JP = pyg.Surface(main.JP_surf.get_size(), pyg.SRCALPHA)
-        JP.blit(main.JP_surf, main.JP_surf.get_rect())
-        return JP
+        return functions.re_get_surf(main.JP_surf)
+    
+    def re_get_surf(surf : pyg.Surface) -> pyg.Surface:
+        result = pyg.Surface(surf.get_size(), pyg.SRCALPHA)
+        result.blit(surf, surf.get_rect())
+        return result
+
+    def get_temp_var(path_of_value : List[str] = []) -> dict:
+        global tempVarfile
+        with open(tempVarfile, "r") as json_file:
+            json_file_dict = json.load(json_file)
+        wanted_value = json_file_dict
+        for key in path_of_value:
+            wanted_value = wanted_value[key]
+        return wanted_value
+    
+    def update_temp_var(new : dict):
+        global tempVarfile
+        with open(tempVarfile, "w") as json_file:
+            json.dump(new, json_file, indent=4)
+    
+    def quick_update_temp_var(new_value : any, path_of_value : List[str]):
+        base_content = functions.get_temp_var()
+        final_value = new_value
+        for i in range(len(path_of_value)):
+            value = base_content
+            for j in range(len(path_of_value) - i -1):
+                value = value[path_of_value[j]]
+            value[path_of_value[-i-1]] = final_value
+            final_value = value
+        functions.update_temp_var(final_value)
+
 main.Start()
 
 try:
