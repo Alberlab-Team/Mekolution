@@ -7,6 +7,42 @@ from typing import *
 import time
 
 
+class vector2():
+
+    def __init__(self, value : Tuple[float, float]) -> None:
+        self.x = value[0]
+        self.y = value[1]
+
+    def V0() -> "vector2" :
+        return vector2((0, 0))
+    
+    def tuple(self) -> Tuple[float, float]:
+        return (self.x, self.y)
+
+    def __add__(self, other : "vector2") :
+
+        return vector2((self.x + other.x, self.y + other.y))
+
+    def __sub__(self, other : "vector2") :
+
+        return vector2((self.x - other.x, self.y - other.y))
+
+    def __neg__(self):
+
+        return vector2.V0() - self
+    
+    def __mul__(self, other : float) :
+
+        return vector2((self.x * other, self.y * other))
+    
+    def __truediv__(self, other : float) :
+
+        return vector2((self.x / other, self.y / other))
+    
+    def __floordiv__(self, other : float) :
+
+        return vector2((self.x // other, self.y // other))
+
 class bouton() :
     def __init__(self, rect : pyg.Rect, target : Callable[..., None], *args, **kwargs) -> None:
         self.rect = rect
