@@ -1,12 +1,12 @@
 # 0N17
 import os
-import sys
 import pygame as pyg
 import threading as th
 import json
 from typing import *
 from settings_edit import *
 import time
+from math import *
 
 tempVarfile = "TempVar.json"
 
@@ -118,7 +118,7 @@ class JP_caracteristics():
 
 class Sprite() :
     def __init__(self, surf : pyg.Surface) -> None:
-        self.surf = functions.re_get_surf(surf)
+        self.surf : pyg.Surface = functions.re_get_surf(surf)
         self.base_rect = self.surf.get_rect()
         self.pos = vector2.V0()
         self.rect = self.base_rect
@@ -126,6 +126,9 @@ class Sprite() :
     def move(self, pos : vector2):
         self.pos = pos
         self.rect = self.base_rect.move(pos.tuple())
+
+    def collides(self, other:"Sprite"):
+        return self.rect.colliderect(other.rect)
         
 
 class JP():
@@ -133,6 +136,12 @@ class JP():
         self.sprite = Sprite(functions.get_a_JP())
         self.sprite.move((main.screen_size/2) - (vector2(self.sprite.base_rect.size)/2))
         self.caracteristics = caracteristics
+        self.eaten = 0
+        self.move_speed = 1
+
+    def move(self, angle:float)-> None:
+        self.sprite.move()
+        pyg.Surface.convert
 
 
 class main():
@@ -158,7 +167,7 @@ class main():
         Buttons : Dict[str, button] = {}
         ActiveButtons : List[button] = []
         list_of_JP : List[JP] = []
-        lsit_of_carrots : List[Sprite] = []
+        list_of_carrots : List[Sprite] = []
 
     def Start():
         if True : #Before while
@@ -175,6 +184,9 @@ class main():
             main.layers["hutte"].surf.blit(hutte, hutte_rect)
 
             main.list_of_JP.append(JP())
+            JP_colliders : List[th.Thread] = []
+            JP_colliders.append(th.Thread(target=main.JP_collider, args=(main.list_of_JP[-1],)))
+            JP_colliders[-1].start()
 
         if True : # While Threads
             tick = th.Thread(target=main.ticking)
@@ -242,14 +254,14 @@ class main():
         while main.running:
             void_layer = Layer()
             for this_JP in main.list_of_JP:
-                void_layer.surf.blit(this_JP.surf, this_JP.rect)
+                void_layer.surf.blit(this_JP.sprite.surf, this_JP.sprite.rect)
             main.layers["JPs"] = Layer()
             main.layers["JPs"].surf.blit(void_layer.surf, void_layer.rect)
 
     def carrot_display():
         while main.running:
             void_layer = Layer()
-            for this_carrot in main.lsit_of_carrots:
+            for this_carrot in main.list_of_carrots:
                 void_layer.surf.blit(this_carrot.surf, this_carrot.rect)
             main.layers["carrots"] = Layer()
             main.layers["carrots"].surf.blit(void_layer.surf, void_layer.rect)
@@ -258,6 +270,17 @@ class main():
         while main.running:
             time.sleep(0.1)
             main.wait_next_tick.set()
+            main.wait_next_tick.clear()
+
+    def JP_collider(self : JP):
+        while main.running:
+            for i in range(main.list_of_carrots.__len__()):
+                if self.sprite.collides(main.list_of_carrots[i]):
+                    main.list_of_carrots.pop(i)
+                    self.eaten +=1
+
+
+
 
 class functions():
     def wait_for_ticks(time):
@@ -296,6 +319,7 @@ class functions():
             value[path_of_value[-i-1]] = final_value
             final_value = value
         functions.update_temp_var(final_value)
+
 
 main.Start()
 
