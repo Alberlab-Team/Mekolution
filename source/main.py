@@ -7,6 +7,7 @@ from typing import *
 from settings_edit import *
 import time
 from math import *
+from Vector import *
 
 tempVarfile = "TempVar.json"
 
@@ -33,42 +34,6 @@ with open(tempVarfile, "r") as varFile:
         Settings = json.load(SettingsFile)
 
 print(Settings)
-
-class vector2():
-
-    def __init__(self, value : Tuple[float, float]) -> None:
-        self.x = value[0]
-        self.y = value[1]
-
-    def V0() -> "vector2" :
-        return vector2((0, 0))
-    
-    def tuple(self) -> Tuple[float, float]:
-        return (self.x, self.y)
-
-    def __add__(self, other : "vector2") :
-
-        return vector2((self.x + other.x, self.y + other.y))
-
-    def __sub__(self, other : "vector2") :
-
-        return vector2((self.x - other.x, self.y - other.y))
-
-    def __neg__(self):
-
-        return vector2.V0() - self
-    
-    def __mul__(self, other : float) :
-
-        return vector2((self.x * other, self.y * other))
-    
-    def __truediv__(self, other : float) :
-
-        return vector2((self.x / other, self.y / other))
-    
-    def __floordiv__(self, other : float) :
-
-        return vector2((self.x // other, self.y // other))
 
 class button():
     def __init__(self, surf : pyg.surface,  rect : pyg.Rect, target : Callable[..., None], *args, **kwargs) -> None:
@@ -120,10 +85,10 @@ class Sprite() :
     def __init__(self, surf : pyg.Surface) -> None:
         self.surf : pyg.Surface = functions.re_get_surf(surf)
         self.base_rect = self.surf.get_rect()
-        self.pos = vector2.V0()
+        self.pos = Vector2.V0()
         self.rect = self.base_rect
 
-    def move(self, pos : vector2):
+    def move(self, pos : Vector2):
         self.pos = pos
         self.rect = self.base_rect.move(pos.tuple())
 
@@ -134,7 +99,7 @@ class Sprite() :
 class JP():
     def __init__(self, caracteristics : JP_caracteristics = JP_caracteristics()) -> None:
         self.sprite = Sprite(functions.get_a_JP())
-        self.sprite.move((main.screen_size/2) - (vector2(self.sprite.base_rect.size)/2))
+        self.sprite.move((main.screen_size/2) - (Vector2(self.sprite.base_rect.size)/2))
         self.caracteristics = caracteristics
         self.eaten = 0
         self.move_speed = 1
@@ -151,7 +116,7 @@ class main():
         devise = pyg.display.Info()
         screen_width : int = devise.current_w
         screen_heigth : int = round(devise.current_h * 0.95)
-        screen_size = vector2((screen_width, screen_heigth))
+        screen_size = Vector2((screen_width, screen_heigth))
         window = pyg.display.set_mode(screen_size.tuple())
         running = True
 
@@ -180,7 +145,7 @@ class main():
             }
             hutte = pyg.transform.scale(pyg.image.load("source/picture/simulation/Hutte.png"), (main.screen_width/10, main.screen_heigth/10))
             hutte_rect = hutte.get_rect()
-            hutte_rect.move_ip(((main.screen_size - vector2(hutte.get_size()))//2).tuple())
+            hutte_rect.move_ip(((main.screen_size - Vector2(hutte.get_size()))//2).tuple())
             main.layers["hutte"].surf.blit(hutte, hutte_rect)
 
             main.list_of_JP.append(JP())
