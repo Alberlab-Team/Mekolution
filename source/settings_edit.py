@@ -1,10 +1,9 @@
 import sys
 import json
 from PySide6.QtWidgets import (QApplication, QMainWindow, QTextEdit, QPushButton, QVBoxLayout, QWidget, 
-                               QListWidget, QLineEdit, QFileDialog, QInputDialog, QLabel, QHBoxLayout,
-                               QDialog, QCheckBox)
-from PySide6.QtGui import QIcon, QFont, QPainter, QBrush, QColor, QPalette
-from PySide6.QtCore import Qt, QRect, QSize
+                               QListWidget, QLineEdit, QFileDialog, QLabel, QHBoxLayout, QDialog, QCheckBox)
+from PySide6.QtGui import QIcon, QFont, QPainter, QBrush, QColor
+from PySide6.QtCore import Qt, QRect
 
 
 class Dialog(QDialog):
@@ -24,6 +23,7 @@ class Dialog(QDialog):
         rect = QRect(0, 0, self.width(), self.height())
         painter.drawRoundedRect(rect, 10, 10)
 
+
 class JsonEditor(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -31,7 +31,6 @@ class JsonEditor(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        # Widgets pour l'édition JSON
         self.textEdit = QTextEdit()
         self.textEdit.setStyleSheet("border-radius: 10px; background-color: #F5F5F5;")
         self.keyList = QListWidget()
@@ -39,7 +38,7 @@ class JsonEditor(QMainWindow):
         self.searchBar.setPlaceholderText('Rechercher une clé...')
         self.searchBar.textChanged.connect(self.searchKey)
         self.setWindowIcon(QIcon('source/picture/icon/icon_settings.png'))
-        # Boutons
+
         self.NewSheetButton = QPushButton('Créer une nouvelle setting sheet')
         self.NewSheetButton.clicked.connect(self.NewJson)
 
@@ -52,7 +51,6 @@ class JsonEditor(QMainWindow):
         self.editButton = QPushButton('Changer la valeur')
         self.editButton.clicked.connect(self.editValue)
 
-        # Style des boutons
         button_style = """
         QPushButton {
             border-radius: 15px;
@@ -65,7 +63,7 @@ class JsonEditor(QMainWindow):
             background-color: #45a049;
         }
         """
-        # Style de QListWidget
+
         list_style = """
         QListWidget {
             font-size : 18px;
@@ -78,39 +76,24 @@ class JsonEditor(QMainWindow):
             color: white;
         }
         """
-        # Style de la barre de recherche pour arrondir les bords, l'agrandir et changer la couleur de fond
+
         self.searchBar.setStyleSheet("""
         QLineEdit {
             border-radius: 15px;
             padding: 10px;
-            font-size: 16px; /* Ajustez la taille selon vos besoins */
+            font-size: 16px;
             background-color: white;
         }
         """)
-        self.keyList.setStyleSheet("""
-        QListWidget {
-            font-size: 18px; /* Ajustez la taille selon vos besoins */
-            border-radius: 10px;
-            background-color: #F0F0F0;
-            color: #333;
-        }
-        QListWidget::item:selected {
-            background-color: #9E9E9E;
-            color: white;
-        }
-        """)
 
-        # Appliquer le style à keyList
         self.keyList.setStyleSheet(list_style)
-        # Appliquer le style aux boutons
         self.NewSheetButton.setStyleSheet(button_style)
         self.loadButton.setStyleSheet(button_style)
         self.saveButton.setStyleSheet(button_style)
         self.editButton.setStyleSheet(button_style)
 
-        # Agrandir le texte dans QTextEdit
         self.textEdit.setStyleSheet("font-size: 16px; border-radius: 10px; background-color: #F5F5F5;")
-        # Disposition
+
         layout = QVBoxLayout()
         layout.addWidget(self.searchBar)
         layout.addWidget(self.keyList)
@@ -120,28 +103,24 @@ class JsonEditor(QMainWindow):
         layout.addWidget(self.saveButton)
         layout.addWidget(self.editButton)
 
-        # Widget central
         centralWidget = QWidget()
         centralWidget.setLayout(layout)
         self.setCentralWidget(centralWidget)
 
-        # Style et géométrie
         self.setStyleSheet("background-color: #E0E0E0;")
         self.setGeometry(300, 300, 800, 600)
         self.setWindowTitle('Editeur de paramètres - Settings editor')
 
     def NewJson(self):
         dirPath = QFileDialog.getExistingDirectory(self, "Choisir un dossier")
-        with open("source/config/pack1/jsonbasecontent.json", "r") as pack1 :
+        with open("source/config/pack1/jsonbasecontent.json", "r") as pack1:
             basecontent = pack1.read()
-        with open(f"{dirPath}/settings.json", "w+") as jsonfile :
-            jsonfile.write(
-                basecontent
-            )
+        with open(f"{dirPath}/settings.json", "w+") as jsonfile:
+            jsonfile.write(basecontent)
 
-    def loadJson(self, isNew = False, file=None):
-        with open("source/config/pack1/jsonbasecontent.json", "r") as pack1 :
-            baseSettings : dict = json.load(pack1)
+    def loadJson(self, isNew=False, file=None):
+        with open("source/config/pack1/jsonbasecontent.json", "r") as pack1:
+            baseSettings: dict = json.load(pack1)
         Settings = {}
         fileName = True
         while list(baseSettings.keys()) != list(Settings.keys()) and fileName:
@@ -182,39 +161,7 @@ class JsonEditor(QMainWindow):
             dialog.setWindowTitle(f"Changer la valeur pour {key}")
             dialog_layout = QVBoxLayout(dialog)
 
-            label = QLabel(key)
-            label.setFont(QFont("Arial", 12))
-            dialog_layout.addWidget(label)
-
-            current_value_type = type(current_value)
-
-            if current_value_type == dict:
-                dialog.setWindowTitle("Edit Dictionary")
-                for sub_key, sub_value in current_value.items():
-                    sub_value_type = type(sub_value)
-                    sub_dialog_layout = QHBoxLayout()
-                    sub_label = QLabel(sub_key)
-                    sub_label.setFont(QFont("Arial", 10))
-                    sub_dialog_layout.addWidget(sub_label)
-                    if sub_value_type == bool:
-                        checkbox = QCheckBox()
-                        checkbox.setChecked(sub_value)
-                        sub_dialog_layout.addWidget(checkbox)
-                    elif sub_value_type in [str, int]:
-                        input_field = QLineEdit(str(sub_value))
-                        input_field.setStyleSheet("border: 2px solid #4CAF50; border-radius: 5px;")
-                        sub_dialog_layout.addWidget(input_field)
-                    dialog_layout.addLayout(sub_dialog_layout)
-
-            elif current_value_type == bool:
-                checkbox = QCheckBox()
-                checkbox.setChecked(current_value)
-                dialog_layout.addWidget(checkbox)
-
-            elif current_value_type in [int, str]:
-                input_field = QLineEdit(str(current_value))
-                input_field.setStyleSheet("border: 2px solid #4CAF50; border-radius: 5px;")
-                dialog_layout.addWidget(input_field)
+            self.createDialogLayout(dialog_layout, current_value)
 
             button_layout = QHBoxLayout()
             save_button = QPushButton("Save")
@@ -231,37 +178,87 @@ class JsonEditor(QMainWindow):
             dialog.setLayout(dialog_layout)
             dialog.exec_()
 
+    def createDialogLayout(self, layout, current_value):
+        current_value_type = type(current_value)
+
+        if current_value_type == dict:
+            for sub_key, sub_value in current_value.items():
+                sub_value_type = type(sub_value)
+                sub_dialog_layout = QVBoxLayout()
+                sub_label = QLabel(sub_key)
+                sub_label.setFont(QFont("Arial", 10))
+                sub_dialog_layout.addWidget(sub_label)
+                if sub_value_type == bool:
+                    checkbox = QCheckBox()
+                    checkbox.setChecked(sub_value)
+                    sub_dialog_layout.addWidget(checkbox)
+                elif sub_value_type in [str, int, float]:
+                    input_field = QLineEdit(str(sub_value))
+                    input_field.setStyleSheet("border: 2px solid #4CAF50; border-radius: 5px;")
+                    sub_dialog_layout.addWidget(input_field)
+                elif sub_value_type == dict:
+                    self.createDialogLayout(sub_dialog_layout, sub_value)
+                layout.addLayout(sub_dialog_layout)
+
+        elif current_value_type == bool:
+            checkbox = QCheckBox()
+            checkbox.setChecked(current_value)
+            layout.addWidget(checkbox)
+
+        elif current_value_type in [int, float, str]:
+            input_field = QLineEdit(str(current_value))
+            input_field.setStyleSheet("border: 2px solid #4CAF50; border-radius: 5px;")
+            layout.addWidget(input_field)
+
     def saveValue(self, dialog, key, current_value):
 
-        def saveIntOrStr(self):
-            new_value = self.itemAt(1).widget().text()
-            try:
-                new_value = int(new_value)
-            except : pass
-            return new_value
+        def saveIntFloatOrStr(layout):
+            widget = layout.itemAt(1).widget()
+            if widget:
+                new_value = widget.text()
+                try:
+                    new_value = int(new_value)
+                except ValueError:
+                    try:
+                        new_value = float(new_value)
+                    except ValueError:
+                        pass
+                return new_value
+            return None
 
-        def saveBool(self):
-            return self.itemAt(1).widget().isChecked()
-        
+        def saveBool(layout):
+            widget = layout.itemAt(1).widget()
+            if widget:
+                return widget.isChecked()
+            return None
+
+        def saveDict(layout, current_dict):
+            new_dict = {}
+            for i in range(layout.count()):
+                sub_layout = layout.itemAt(i).layout()
+                if sub_layout and sub_layout.itemAt(0).widget() and isinstance(sub_layout.itemAt(0).widget(), QLabel):
+                    sub_key = sub_layout.itemAt(0).widget().text()
+                    sub_value = current_dict.get(sub_key, None)
+                    sub_value_type = type(sub_value)
+                    if sub_value_type == bool:
+                        new_dict[sub_key] = saveBool(sub_layout)
+                    elif sub_value_type in [str, int, float]:
+                        new_dict[sub_key] = saveIntFloatOrStr(sub_layout)
+                    elif sub_value_type == dict:
+                        new_dict[sub_key] = saveDict(sub_layout, sub_value)
+            return new_dict
+
         new_value = None
         value_type = type(current_value)
 
         if value_type == dict:
-            new_value = {}
-            for i in range(dialog.layout().count() - 1):  # Exclude button layout
-                sub_layout = dialog.layout().itemAt(i).layout()
-                if sub_layout is not None:
-                    sub_key = sub_layout.itemAt(0).widget().text()
-                    if isinstance(current_value[sub_key], bool):
-                        new_value[sub_key] = saveBool(sub_layout)
-                    else:
-                        new_value[sub_key] = saveIntOrStr(sub_layout)
+            new_value = saveDict(dialog.layout(), current_value)
 
         elif value_type == bool:
             new_value = saveBool(dialog.layout())
 
-        elif value_type in [str, int]:
-            new_value = saveIntOrStr(dialog.layout())
+        elif value_type in [str, int, float]:
+            new_value = saveIntFloatOrStr(dialog.layout())
 
         self.jsonObject[key] = new_value
         self.textEdit.setText(json.dumps(self.jsonObject, indent=4))
@@ -272,10 +269,12 @@ class JsonEditor(QMainWindow):
         for key in self.jsonObject.keys():
             self.keyList.addItem(key)
 
+
 def settings():
     app = QApplication(sys.argv)
     editor = JsonEditor()
     editor.show()
     app.exec_()
-    #sys.exit()
-    
+
+
+#settings()

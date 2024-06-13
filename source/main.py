@@ -22,7 +22,6 @@ try:
     print(f"deleted file : {tempVarfile}")
 except:
     pass
-
 with open(tempVarfile, "w+")as File:
     File.write(Content)
 
@@ -157,11 +156,13 @@ class main():
 
         layers : Dict[str, Layer]
         Carrot_surf = pyg.transform.scale(pyg.image.load("source/picture/simulation/carrot.png"), (screen_width/45, screen_heigth/15))
+        Cow_surf = pyg.transform.scale(pyg.image.load("source/picture/simulation/cow.png"), (screen_width/20, screen_heigth/10))
         JP_surf = pyg.transform.scale(pyg.image.load("source/picture/simulation/JP.png"), (screen_width/45, screen_heigth/15))
         Buttons : Dict[str, button] = {}
         ActiveButtons : List[button] = []
         list_of_JP : List[JP] = []
         list_of_carrots : List[Sprite] = []
+        list_of_cows : List[Sprite] = []
         JP_colliders : List[th.Thread] = []
         JP_brains : List[th.Thread] = []
 
@@ -181,6 +182,7 @@ class main():
             main.layers = {
                 "buttons" : Layer(),
                 "carrots" : Layer(),
+                "cows" : Layer(),
                 "JPs" : Layer(),
                 "hutte" : Layer(),
             }
@@ -204,9 +206,16 @@ class main():
             display_carrots = th.Thread(target=SecondaryThreads.carrot_display)
             display_carrots.start()
 
+            display_cow = th.Thread(target=SecondaryThreads.cow_display)
+            display_cow.start()
+
             if Settings["carrots"]["activated"]:
                 carrot_summon = th.Thread(target=SecondaryThreads.carrot_summon)
                 carrot_summon.start()
+
+            if Settings["selfishness"]["activated"]:
+                cow_summon = th.Thread(target=SecondaryThreads.cow_summon)
+                cow_summon.start()
 
             night = th.Thread(target=SecondaryThreads.hour_gestionnary)
             night.start()
@@ -281,6 +290,15 @@ class SecondaryThreads():
             main.layers["carrots"] = Layer()
             main.layers["carrots"].surf.blit(void_layer.surf, void_layer.rect)
 
+    def cow_display():
+        while main.running:
+            main.wait_next_tick.wait()
+            void_layer = Layer()
+            for this_cow in main.list_of_cows:
+                void_layer.surf.blit(this_cow.surf, this_cow.rect)
+            main.layers["cow"] = Layer()
+            main.layers["cow"].surf.blit(void_layer.surf, void_layer.rect)
+
     def ticking():
         while main.running:
             time.sleep(0.1)
@@ -293,6 +311,13 @@ class SecondaryThreads():
             if main.list_of_carrots.__len__()<Settings["carrots"]["max number"]:
                 functions.wait_for_ticks(Settings["carrots"]["ticks before new"] - 1)
                 functions.Summon_A_Carrot()
+
+    def cow_summon():
+        while main.running:
+            main.wait_next_tick.wait()
+            if main.list_of_cows.__len__()<Settings["selfishness"]["cows"]["max number"]:
+                functions.wait_for_ticks(Settings["selfishness"]["cows"]["ticks before new"] - 1)
+                functions.Summon_A_Cow()
 
     def hour_gestionnary():
         while main.running:
@@ -387,7 +412,7 @@ class functions():
                 y = random.choice([0, cases.y-1])
             else:
                 y = random.randint(0, cases.y-1)
-                x = random.choice(0, cases.x-1)
+                x = random.choice([0, cases.x-1])
         else:
             x = random.randint(0, cases.x-1)
             y = random.randint(0, cases.y-1)
@@ -405,6 +430,12 @@ class functions():
             pos = functions.Generate_Random_Pos(Vector2((150, 100)), main.screen_size, True)
         main.list_of_carrots.append(Sprite(functions.re_get_surf(main.Carrot_surf)))
         main.list_of_carrots[-1].move(pos)
+
+    def Summon_A_Cow(pos : Union[Vector2, None] = None): 
+        if pos is None:
+            pos = functions.Generate_Random_Pos(Vector2((150, 100)), main.screen_size, True, True)
+        main.list_of_cows.append(Sprite(functions.re_get_surf(main.Cow_surf)))
+        main.list_of_cows[-1].move(pos)
 
     def Get_the_closest_food(pos : Vector2)->Vector2:
         closest : float = -1

@@ -1,13 +1,28 @@
 {
     "speed": 1,
-    "day time": 50,
+    "day time": 300,
+    "night time" : 50,
+    "dawn time" : 50,
+    "food" : {
+        "to survive" : 5,
+        "to reproduce" : 5
+    },
     "selfishness": {
-        "activated": false,
-        "base selfishness" : 50
+        "activated": true,
+        "base selfishness" : 50,
+        "cows":{
+            "max number": 5,
+            "ticks before new": 10,
+            "food point": 10,
+            "move":{
+                "speed": 0.5
+            }
+        }
     },
     "carrots":{
         "activated": true,
-        "max number": 10,
-        "ticks before new": 10
+        "max number": 20,
+        "ticks before new": 10,
+        "food points": 1
     }
 }
