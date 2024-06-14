@@ -84,7 +84,7 @@ class Layer():
 
 class JP_caracteristics():
     def __init__(self) -> None:
-        pass
+        self.selfishness = Settings["selfishness"]["base selfishness"]
 
 class Sprite() :
     def __init__(self, surf : pyg.Surface) -> None:
@@ -98,20 +98,52 @@ class Sprite() :
         self.pos = pos
         self.rect = self.base_rect.move((self.pos-self.surplus).tuple())
 
-    def move_of(self, deplcement : Vector2):
-        self.move(deplcement + self.pos)
+    def move_of(self, deplacement : Vector2, max : Union[float, None]=None):
+        x = deplacement.x
+        y = deplacement.y
+        if x == y == 0:
+            return None
+        if max is not None:
+            hyp = sqrt((x**2) + (y**2))
+            if hyp > max:
+                ratio = max/hyp
+                deplacement.x *= ratio
+                deplacement.y *= ratio
+        self.move(deplacement + self.pos)
+
+    def move_angle(self, angle, norm):
+        pos = Vector2(cos(angle * pi/360), sin(angle * pi/360))*norm
+        self.move_of(pos)
 
     def collides(self, other:"Sprite"):
         return self.rect.colliderect(other.rect)
-      
+
+class Cow(Sprite):
+    def __init__(self, index) -> None:
+        super().__init__(main.Cow_surf)
+        self.imobilisated = False
+        self.brain_move_thread= th.Thread(target=TertiaryThreads.cow_brain_move, args=(self,))
+        self.brain_move_thread.start()
+        self.brain_collide_thread= th.Thread(target=TertiaryThreads.cow_brain_collides_JP, args=(self,))
+        self.brain_collide_thread.start()
+        self.index = index
+    
+    def __del__(self):
+        try:
+            #print("don't worry if an threading error apear before 1 or 2 second") #because it will destroy some threads
+            del self.brain_thread
+            del self.brain_move_thread
+        except:pass
+
 class JP():
     def __init__(self, caracteristics : JP_caracteristics = JP_caracteristics()) -> None:
         self.sprite = Sprite(functions.get_a_JP())
         self.sprite.move((main.screen_size/2) - (Vector2(self.sprite.base_rect.size)/2))
         self.caracteristics = caracteristics
         self.eaten = 0
-        self.move_speed = main.screen_size.norm()/100 * Settings["speed"]
+        self.move_speed = main.screen_size.norm()/100 * Settings["JP speed"]
         self.alive = True
+        self.occuped = False
         main.JP_colliders.append(th.Thread(target=TertiaryThreads.JP_collider, args=(self,)))
         main.JP_colliders[-1].start()
         main.JP_brains.append(th.Thread(target=TertiaryThreads.JP_brain, args=(self,)))
@@ -119,18 +151,10 @@ class JP():
 
 
     def move(self, angle:float)-> None:
-        pos = Vector2(cos(angle * pi/360), sin(angle * pi/360))*self.move_speed
-        self.sprite.move_of(pos)
+        self.sprite.move_angle(angle, self.move_speed)
 
     def move_to(self, pos:Vector2)->None:
-        x = pos.x - self.sprite.pos.x
-        y = pos.y - self.sprite.pos.y
-        if x == y == 0:
-            return None
-        hyp = sqrt((x**2) + (y**2))
-        ratio = self.move_speed/hyp
-        Vector = Vector2((x * ratio, y * ratio))
-        self.sprite.move_of(Vector)
+        self.sprite.move_of(pos - self.sprite.pos, self.move_speed)
 
 
 class main():
@@ -161,8 +185,9 @@ class main():
         Buttons : Dict[str, button] = {}
         ActiveButtons : List[button] = []
         list_of_JP : List[JP] = []
+        free_JPs = 1
         list_of_carrots : List[Sprite] = []
-        list_of_cows : List[Sprite] = []
+        list_of_cows : List[Union[Cow, None]] = []
         JP_colliders : List[th.Thread] = []
         JP_brains : List[th.Thread] = []
 
@@ -217,9 +242,11 @@ class main():
                 cow_summon = th.Thread(target=SecondaryThreads.cow_summon)
                 cow_summon.start()
 
-            night = th.Thread(target=SecondaryThreads.hour_gestionnary)
-            night.start()
+            time_bot = th.Thread(target=SecondaryThreads.hour_gestionnary)
+            time_bot.start()
 
+            free_JPs_getter = th.Thread(target=SecondaryThreads.get_free_JPs)
+            free_JPs_getter.start()
             #Remember that the following while is another thread, the main thread
             
         while main.running : 
@@ -295,7 +322,8 @@ class SecondaryThreads():
             main.wait_next_tick.wait()
             void_layer = Layer()
             for this_cow in main.list_of_cows:
-                void_layer.surf.blit(this_cow.surf, this_cow.rect)
+                if this_cow is not None:
+                    void_layer.surf.blit(this_cow.surf, this_cow.rect)
             main.layers["cow"] = Layer()
             main.layers["cow"].surf.blit(void_layer.surf, void_layer.rect)
 
@@ -318,6 +346,10 @@ class SecondaryThreads():
             if main.list_of_cows.__len__()<Settings["selfishness"]["cows"]["max number"]:
                 functions.wait_for_ticks(Settings["selfishness"]["cows"]["ticks before new"] - 1)
                 functions.Summon_A_Cow()
+            if None in main.list_of_cows:
+                functions.wait_for_ticks(Settings["selfishness"]["cows"]["ticks before new"] - 1)
+                index = main.list_of_cows.index(None)
+                main.list_of_cows[index] = Cow(index)
 
     def hour_gestionnary():
         while main.running:
@@ -337,6 +369,14 @@ class SecondaryThreads():
                 functions.unactivate_filter(main.filter_names["Dawn"])
                 main.hour = "day"
 
+    def get_free_JPs():
+        while main.running:
+            main.wait_next_tick.wait()
+            free = 0
+            for jp in main.list_of_JP:
+                free += not jp.occuped
+            main.free_JPs = free
+
 
 class TertiaryThreads():
     def JP_collider(self : JP):
@@ -349,6 +389,15 @@ class TertiaryThreads():
                         self.eaten += Settings["carrots"]["food points"]
                 except IndexError:
                     break
+            occuped = False
+            for i in range(main.list_of_cows.__len__()):
+                try:
+                    if main.list_of_cows[i] is not None:
+                        if self.sprite.collides(main.list_of_cows[i]):
+                            occuped = True
+                except IndexError:
+                    break
+            self.occuped = occuped
 
     def JP_brain(self : JP):
         random_objective = functions.Generate_Random_Pos(Vector2((150,100)), main.screen_size, True)
@@ -362,6 +411,54 @@ class TertiaryThreads():
                 objective = random_objective
             self.move_to(objective)
 
+    def cow_brain_move(self : Cow):
+        set_objective = True
+        objective : Vector2
+        while main.running:
+            main.wait_next_tick.wait()
+            if set_objective:
+                objective = functions.Generate_Random_Pos(Vector2((150, 100)), main.screen_size, True)
+                set_objective = False
+            if not self.imobilisated:
+                self.move_of(objective - self.pos, Settings["selfishness"]["cows"]["move speed"] * main.screen_size.norm()/100)
+            if self.rect.collidepoint(objective.tuple()):
+                set_objective = True
+    
+    def cow_brain_collides_JP(self : Cow):
+        running = True
+        while main.running and running:
+            main.wait_next_tick.wait()
+            indexs : List[int] = []
+            collided = 0
+            for i in range(main.list_of_JP.__len__()):
+                jp = main.list_of_JP[i]
+                if self.collides(jp.sprite):
+                    collided += 1
+                    indexs.append(i)
+                    if collided == 2:
+                        break
+            if collided == 0:
+                self.imobilisated = False
+            elif collided == 1:
+                self.imobilisated = True
+            elif collided == 2:
+                #print("ho mooooooo !")
+                jp1 = main.list_of_JP[indexs[0]]
+                jp2 = main.list_of_JP[indexs[1]]
+
+                jp1_selfishness = jp1.caracteristics.selfishness
+                jp2_selfishness = jp2.caracteristics.selfishness
+
+                inter = jp1_selfishness + jp2_selfishness - 100
+                if inter >= 0:
+                    jp1.eaten += jp1_selfishness - inter # total collected = eaten 1 +  2
+                    jp2.eaten += jp2_selfishness - inter # = selfish 1 + 2 - inter - inter = 100 - inter.
+                else :
+                    jp1.eaten += jp1_selfishness - (inter / 2) # inter is negative, so it's -rest
+                    jp2.eaten += jp2_selfishness - (inter / 2) # so it give a half of rest to one and rest to other
+                main.list_of_cows[self.index] = None #Replace the cow by a None
+                self.__del__()#normally it auto destroys the object, where is this Thread, but it's better as that
+                running = False# to be sure, so normally this is never called
 
 
 class functions():
@@ -434,17 +531,26 @@ class functions():
     def Summon_A_Cow(pos : Union[Vector2, None] = None): 
         if pos is None:
             pos = functions.Generate_Random_Pos(Vector2((150, 100)), main.screen_size, True, True)
-        main.list_of_cows.append(Sprite(functions.re_get_surf(main.Cow_surf)))
-        main.list_of_cows[-1].move(pos)
+        index = main.list_of_cows.__len__()
+        main.list_of_cows.insert(index, Cow(index))
+        main.list_of_cows[index].move(pos)
 
     def Get_the_closest_food(pos : Vector2)->Vector2:
         closest : float = -1
         saved : Vector2 = pos
         for carrot in main.list_of_carrots:
-            dist = carrot.pos.dist(pos)
+            dist = carrot.pos.dist(pos) /Settings["carrots"]["interst"]
             if closest > dist or closest == -1:
                 closest = dist
                 saved = carrot.pos
+        if main.free_JPs >= 2:
+            for cow in main.list_of_cows:
+                if cow is not None:
+                    dist = cow.pos.dist(pos) /Settings["selfishness"]["cows"]["interst"]
+                    if closest > dist or closest == -1:
+                        closest = dist
+                        saved = cow.pos
+
         return copy.deepcopy(saved)
 
     def activate_filter(key : Tuple[int, int, int]):
@@ -471,7 +577,8 @@ class functions():
                 child_number = jp.eaten//Settings["food"]["to reproduce"]
                 jp.eaten -= child_number * Settings["food"]["to reproduce"]
                 for j in range(child_number):
-                    main.list_of_JP.append(JP())
+                    if Settings["maximum of JP"] > main.list_of_JP.__len__():
+                        main.list_of_JP.append(JP())
                 jp.eaten = 0
             else:
                 jp.alive = False

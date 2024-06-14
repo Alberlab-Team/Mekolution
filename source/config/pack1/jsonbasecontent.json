@@ -1,8 +1,9 @@
 {
-    "speed": 1,
+    "JP speed": 1,
     "day time": 300,
     "night time" : 50,
     "dawn time" : 50,
+    "maximum of JP" : 30,
     "food" : {
         "to survive" : 5,
         "to reproduce" : 5
@@ -14,15 +15,15 @@
             "max number": 5,
             "ticks before new": 10,
             "food point": 10,
-            "move":{
-                "speed": 0.5
-            }
+            "interst" : 1.5,
+            "move speed": 0.5
         }
     },
     "carrots":{
         "activated": true,
         "max number": 20,
         "ticks before new": 10,
-        "food points": 1
+        "food points": 1,
+        "interst" : 1
     }
 }
