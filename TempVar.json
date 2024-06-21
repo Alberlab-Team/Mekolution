@@ -1,0 +1,15 @@
+{
+    "setting_sheet_path": null,
+    "JP": {},
+    "selfishness": {
+        "list": [
+            20,
+            20,
+            20,
+            20
+        ],
+        "average": 20.0,
+        "median": 20.0,
+        "variance": 0.0
+    }
+}

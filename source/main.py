@@ -35,7 +35,7 @@ with open(tempVarfile, "r") as varFile:
     with open(path, "r") as SettingsFile:
         Settings = json.load(SettingsFile)
 
-print(Settings)
+#print(Settings)
 
 
 
@@ -80,11 +80,14 @@ class Layer():
         self.rect = self.surf.get_rect()
     
     def add(self):
-        main.window.blit(self.surf, self.rect)
+        main.unsized_window.blit(self.surf, self.rect)
 
 class JP_caracteristics():
     def __init__(self) -> None:
         self.selfishness = Settings["selfishness"]["base selfishness"]
+
+    def modify(self, base : 'JP_caracteristics'):
+        self.selfishness = base.selfishness + random.choice([-10, 10])
 
 class Sprite() :
     def __init__(self, surf : pyg.Surface) -> None:
@@ -161,11 +164,14 @@ class main():
     if True: #Here are the global vars
         pyg.init()
         devise = pyg.display.Info()
-        screen_width : int = devise.current_w
-        screen_heigth : int = round(devise.current_h * 0.95)
+        screen_width : int = 1600
+        screen_heigth : int = 900
         screen_size = Vector2((screen_width, screen_heigth))
-        window = pyg.display.set_mode(screen_size.tuple())
+        unsized_window = pyg.Surface((1600, 900))
+        window = pyg.display.set_mode((devise.current_w, devise.current_h // 1.1), pyg.RESIZABLE)
         running = True
+
+        window_color = (115, 192, 21)
 
         KeyDown = []
         KeyUp = []
@@ -201,6 +207,9 @@ class main():
         filters:Dict[Tuple[int, int, int], bool]={}
         for key in list(filter_names.keys()):
             filters[filter_names[key]]=False
+
+        writing_temp_var = False
+        temp_var = {}
     def Start():
         if True : #Before while
 
@@ -247,6 +256,10 @@ class main():
 
             free_JPs_getter = th.Thread(target=SecondaryThreads.get_free_JPs)
             free_JPs_getter.start()
+
+            json_save = th.Thread(target=SecondaryThreads.save_dev_vars)
+            json_save.start()
+
             #Remember that the following while is another thread, the main thread
             
         while main.running : 
@@ -282,12 +295,13 @@ class SecondaryThreads():
     def general_display():
         while main.running:
             main.wait_next_tick.wait()  
-            main.window.fill((115, 192, 21))
+            main.unsized_window.fill(main.window_color)
             for key in list(main.layers.keys()):
                 main.layers[key].add()
             for key in list(main.filters.keys()):
                 if main.filters[key]:
                     functions.apply_filter(key)
+            main.window.blit(pyg.transform.scale(main.unsized_window, main.window.get_size()), (0,0))
             pyg.display.flip()
     
     def button_display():
@@ -329,7 +343,7 @@ class SecondaryThreads():
 
     def ticking():
         while main.running:
-            time.sleep(0.1)
+            time.sleep(0.05)
             main.wait_next_tick.set()
             main.wait_next_tick.clear()
 
@@ -341,15 +355,19 @@ class SecondaryThreads():
                 functions.Summon_A_Carrot()
 
     def cow_summon():
+        def Wait():
+            functions.wait_for_ticks(Settings["selfishness"]["cows"]["ticks before new"] - 1)
+
         while main.running:
             main.wait_next_tick.wait()
             if main.list_of_cows.__len__()<Settings["selfishness"]["cows"]["max number"]:
-                functions.wait_for_ticks(Settings["selfishness"]["cows"]["ticks before new"] - 1)
+                print(main.list_of_cows.__len__())
+                Wait()
                 functions.Summon_A_Cow()
-            if None in main.list_of_cows:
-                functions.wait_for_ticks(Settings["selfishness"]["cows"]["ticks before new"] - 1)
+            elif None in main.list_of_cows:
+                Wait()
                 index = main.list_of_cows.index(None)
-                main.list_of_cows[index] = Cow(index)
+                functions.Summon_A_Cow(index = index, replace = True)
 
     def hour_gestionnary():
         while main.running:
@@ -377,6 +395,60 @@ class SecondaryThreads():
                 free += not jp.occuped
             main.free_JPs = free
 
+    def save_dev_vars():
+
+        class caracteristic_of_jp:
+            def __init__(self, name : str) -> None:
+                self.name = name
+                self.values : List[int] = []
+                self.average : float = 0.0
+                self.median : float = 0.0
+                self.variance : float = 0.0
+                self.calc()
+
+            def calc(self):
+
+                self.values = []
+                for jp in main.list_of_JP:           #List of values
+                    self.values.append(getattr(jp.caracteristics, self.name, None)) 
+
+                self.average = sum(self.values)/self.values.__len__()   #Average
+
+                median_index = (self.values.__len__()-1)/2
+                if median_index == (self.values.__len__()-1)//2:
+                    self.median = self.values[round(median_index)]         #Median
+                else:
+                    self.median = (sum(self.values[floor(median_index): ceil(median_index)+1]))/2 
+
+                self.variance = 0.0
+                for value in self.values:
+                    self.variance += (value - self.average)**2
+                self.variance /= self.values.__len__()
+
+            def get_dict(self) -> dict:
+                self.calc()
+                returned : dict = {
+                    "list": self.values,
+                    "average" : self.average,
+                    "median" : self.median,
+                    "variance" : self.variance,
+                }
+                return returned
+
+        selfishness = caracteristic_of_jp("selfishness")
+
+        with open(tempVarfile, "r") as File_r:
+            File_r = json.load(File_r)
+            while main.running:
+                main.wait_next_tick.wait()
+                
+                File_r["selfishness"] = selfishness.get_dict()
+
+                main.temp_var = File_r
+                main.writing_temp_var = True
+                with open(tempVarfile, "w") as File_w:
+                    json.dump(File_r, File_w, indent=4)
+                main.writing_temp_var = False
 
 class TertiaryThreads():
     def JP_collider(self : JP):
@@ -442,7 +514,6 @@ class TertiaryThreads():
             elif collided == 1:
                 self.imobilisated = True
             elif collided == 2:
-                #print("ho mooooooo !")
                 jp1 = main.list_of_JP[indexs[0]]
                 jp2 = main.list_of_JP[indexs[1]]
 
@@ -528,11 +599,15 @@ class functions():
         main.list_of_carrots.append(Sprite(functions.re_get_surf(main.Carrot_surf)))
         main.list_of_carrots[-1].move(pos)
 
-    def Summon_A_Cow(pos : Union[Vector2, None] = None): 
+    def Summon_A_Cow(pos : Union[Vector2, None] = None, index : int | None = None, replace : bool = False): 
+        if index == None:
+            index = main.list_of_cows.__len__()
         if pos is None:
             pos = functions.Generate_Random_Pos(Vector2((150, 100)), main.screen_size, True, True)
-        index = main.list_of_cows.__len__()
-        main.list_of_cows.insert(index, Cow(index))
+        if replace:
+            main.list_of_cows[index] = Cow(index)
+        else:
+            main.list_of_cows.insert(index, Cow(index))
         main.list_of_cows[index].move(pos)
 
     def Get_the_closest_food(pos : Vector2)->Vector2:
@@ -564,7 +639,7 @@ class functions():
         surf.fill(key)
         surf.set_alpha(key[3])
         rect = surf.get_rect()
-        main.window.blit(surf, rect)
+        main.unsized_window.blit(surf, rect)
 
     def reproduction():
         for i in range(main.list_of_JP.__len__()):
@@ -574,11 +649,13 @@ class functions():
                 break
             if jp.eaten > Settings["food"]["to survive"]:
                 jp.eaten -= Settings["food"]["to survive"]
-                child_number = jp.eaten//Settings["food"]["to reproduce"]
+                child_number = round(jp.eaten//Settings["food"]["to reproduce"])
                 jp.eaten -= child_number * Settings["food"]["to reproduce"]
                 for j in range(child_number):
                     if Settings["maximum of JP"] > main.list_of_JP.__len__():
-                        main.list_of_JP.append(JP())
+                        new_JP = JP()
+                        new_JP.caracteristics.modify(jp.caracteristics)
+                        main.list_of_JP.append(new_JP)
                 jp.eaten = 0
             else:
                 jp.alive = False

@@ -2,5 +2,11 @@
     "setting_sheet_path" : null,
     "JP" : {
         
+    },
+    "selfishness":{
+        "list" : [],
+        "average" : 0,
+        "median": 0,
+        "variance": 0
     }
 }
