@@ -1,6 +1,6 @@
 {
     "JP speed": 1,
-    "day time": 300,
+    "day time": 450,
     "night time" : 50,
     "dawn time" : 50,
     "maximum of JP" : 30,
@@ -22,7 +22,7 @@
     "carrots":{
         "activated": true,
         "max number": 20,
-        "ticks before new": 10,
+        "ticks before new": 1,
         "food points": 1,
         "interst" : 1
     }

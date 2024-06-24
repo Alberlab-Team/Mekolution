@@ -108,7 +108,7 @@ class JsonEditor(QMainWindow):
         self.setCentralWidget(centralWidget)
 
         self.setStyleSheet("background-color: #E0E0E0;")
-        self.setGeometry(300, 300, 800, 600)
+        self.setGeometry(0, 0, *QApplication.primaryScreen().size().toTuple())
         self.setWindowTitle('Editeur de paramètres - Settings editor')
 
     def NewJson(self):
@@ -270,11 +270,14 @@ class JsonEditor(QMainWindow):
             self.keyList.addItem(key)
 
 
-def settings():
-    app = QApplication(sys.argv)
+def settings(app : QApplication | None = None)->QApplication:
+    if app is None:
+        app = QApplication(sys.argv)
     editor = JsonEditor()
     editor.show()
-    app.exec_()
+    app.exec()
+    editor.close()
+    return app
 
 
 #settings()

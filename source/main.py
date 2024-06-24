@@ -1,4 +1,6 @@
-# 0N17
+# 0N17 --> the best dev :)
+
+#region import
 import os
 import pygame as pyg
 import threading as th
@@ -11,7 +13,10 @@ import math
 from Vector import *
 import random
 import copy
+from data_viewer import RepresentFileApp
+# endregion
 
+# region top
 tempVarfile = "TempVar.json"
 
 with open("source/config/pack1/devVar.json", "r")as f:
@@ -25,9 +30,9 @@ except:
 with open(tempVarfile, "w+")as File:
     File.write(Content)
 
-
 Settings = None
-settings()
+app = settings()
+
 with open(tempVarfile, "r") as varFile:
     path = json.load(varFile)["setting_sheet_path"]
     if path is None:
@@ -36,8 +41,7 @@ with open(tempVarfile, "r") as varFile:
         Settings = json.load(SettingsFile)
 
 #print(Settings)
-
-
+# endregion
 
 
 class button():
@@ -82,13 +86,6 @@ class Layer():
     def add(self):
         main.unsized_window.blit(self.surf, self.rect)
 
-class JP_caracteristics():
-    def __init__(self) -> None:
-        self.selfishness = Settings["selfishness"]["base selfishness"]
-
-    def modify(self, base : 'JP_caracteristics'):
-        self.selfishness = base.selfishness + random.choice([-10, 10])
-
 class Sprite() :
     def __init__(self, surf : pyg.Surface) -> None:
         self.surf : pyg.Surface = functions.re_get_surf(surf)
@@ -101,7 +98,7 @@ class Sprite() :
         self.pos = pos
         self.rect = self.base_rect.move((self.pos-self.surplus).tuple())
 
-    def move_of(self, deplacement : Vector2, max : Union[float, None]=None):
+    def move_of(self, deplacement : Vector2, max : float | None=None):
         x = deplacement.x
         y = deplacement.y
         if x == y == 0:
@@ -121,6 +118,7 @@ class Sprite() :
     def collides(self, other:"Sprite"):
         return self.rect.colliderect(other.rect)
 
+
 class Cow(Sprite):
     def __init__(self, index) -> None:
         super().__init__(main.Cow_surf)
@@ -138,13 +136,23 @@ class Cow(Sprite):
             del self.brain_move_thread
         except:pass
 
+class JP_caracteristics():
+    def __init__(self) -> None:
+        self.selfishness = Settings["selfishness"]["base selfishness"]
+
+    def modify(self, base : 'JP_caracteristics'):
+        self.selfishness = min(max(base.selfishness + random.choice([-10, 10]), 0), 100)
+
 class JP():
-    def __init__(self, caracteristics : JP_caracteristics = JP_caracteristics()) -> None:
+    def __init__(self, caracteristics : JP_caracteristics | None = None) -> None:
+        if caracteristics is None :
+            self.caracteristics = JP_caracteristics()
+        else:
+            self.caracteristics = caracteristics
         self.sprite = Sprite(functions.get_a_JP())
-        self.sprite.move((main.screen_size/2) - (Vector2(self.sprite.base_rect.size)/2))
-        self.caracteristics = caracteristics
+        self.sprite.move((main.screen_size/2) - (Vector2(self.sprite.base_rect.size)/2))#
         self.eaten = 0
-        self.move_speed = main.screen_size.norm()/100 * Settings["JP speed"]
+        self.move_speed = main.screen_size.norm()/200 * Settings["JP speed"]#
         self.alive = True
         self.occuped = False
         main.JP_colliders.append(th.Thread(target=TertiaryThreads.JP_collider, args=(self,)))
@@ -160,134 +168,133 @@ class JP():
         self.sprite.move_of(pos - self.sprite.pos, self.move_speed)
 
 
-class main():
-    if True: #Here are the global vars
-        pyg.init()
-        devise = pyg.display.Info()
-        screen_width : int = 1600
-        screen_heigth : int = 900
-        screen_size = Vector2((screen_width, screen_heigth))
-        unsized_window = pyg.Surface((1600, 900))
-        window = pyg.display.set_mode((devise.current_w, devise.current_h // 1.1), pyg.RESIZABLE)
-        running = True
+class main(): # Global_Vars
+    pyg.init()
+    devise = pyg.display.Info()
+    screen_width : int = 1600
+    screen_heigth : int = 900
+    screen_size = Vector2((screen_width, screen_heigth))
+    unsized_window = pyg.Surface(screen_size.tuple())
+    window = pyg.display.set_mode((devise.current_w, devise.current_h // 1.1), pyg.RESIZABLE)
+    running = True
 
-        window_color = (115, 192, 21)
+    window_color = (115, 192, 21)
 
-        KeyDown = []
-        KeyUp = []
-        Mouse = ["None", "None", "None"]
+    KeyDown = []
+    KeyUp = []
+    Mouse = ["None", "None", "None"]
 
-        wait_next_tick = th.Event()
+    wait_next_tick = th.Event()
 
-        hutte = pyg.transform.scale(pyg.image.load("source/picture/simulation/Hutte.png"), (screen_width/8, screen_heigth//7))
-        hutte_rect = hutte.get_rect()
-        hutte_pos = screen_size//2
-        hutte_rect.move_ip(((screen_size - Vector2(hutte.get_size()))//2).tuple())
+    hutte = pyg.transform.scale(pyg.image.load("source/picture/simulation/Hutte.png"), (screen_width/16, screen_heigth//14))
+    hutte_rect = hutte.get_rect()
+    hutte_pos = screen_size//2 #
+    hutte_rect.move_ip(((screen_size - Vector2(hutte.get_size()))//2).tuple())#
 
-        layers : Dict[str, Layer]
-        Carrot_surf = pyg.transform.scale(pyg.image.load("source/picture/simulation/carrot.png"), (screen_width/45, screen_heigth/15))
-        Cow_surf = pyg.transform.scale(pyg.image.load("source/picture/simulation/cow.png"), (screen_width/20, screen_heigth/10))
-        JP_surf = pyg.transform.scale(pyg.image.load("source/picture/simulation/JP.png"), (screen_width/45, screen_heigth/15))
-        Buttons : Dict[str, button] = {}
-        ActiveButtons : List[button] = []
-        list_of_JP : List[JP] = []
-        free_JPs = 1
-        list_of_carrots : List[Sprite] = []
-        list_of_cows : List[Union[Cow, None]] = []
-        JP_colliders : List[th.Thread] = []
-        JP_brains : List[th.Thread] = []
+    layers : Dict[str, Layer]
+    Carrot_surf = pyg.transform.scale(pyg.image.load("source/picture/simulation/carrot.png"), (screen_width/90, screen_heigth/30))
+    Cow_surf = pyg.transform.scale(pyg.image.load("source/picture/simulation/cow.png"), (screen_width/40, screen_heigth/20))
+    JP_surf = pyg.transform.scale(pyg.image.load("source/picture/simulation/JP.png"), (screen_width/90, screen_heigth/30))
+    Buttons : Dict[str, button] = {}
+    ActiveButtons : List[button] = []
+    list_of_JP : List[JP] = []
+    free_JPs = 1
+    list_of_carrots : List[Sprite] = []
+    list_of_cows : List[Cow | None] = []
+    JP_colliders : List[th.Thread] = []
+    JP_brains : List[th.Thread] = []
 
-        hour : str = "day"
-        filter_names:Dict[str, Tuple[int, int, int]]={
-            "Dark" : (0  , 0  , 0  , 127),
-            "Clear": (255, 255, 255, 127),
-            "Night": (0  , 0  , 64 , 127),
-            "Dawn" : (255, 183, 111, 63 ),
-        }
-        filters:Dict[Tuple[int, int, int], bool]={}
-        for key in list(filter_names.keys()):
-            filters[filter_names[key]]=False
+    hour : str = "day"
+    filter_names:Dict[str, Tuple[int, int, int]]={
+        "Dark" : (0  , 0  , 0  , 127),
+        "Clear": (255, 255, 255, 127),
+        "Night": (0  , 0  , 64 , 127),
+        "Dawn" : (255, 183, 111, 63 ),
+    }
+    filters:Dict[Tuple[int, int, int], bool]={}
+    for key in list(filter_names.keys()):
+        filters[filter_names[key]]=False
 
-        writing_temp_var = False
-        temp_var = {}
-    def Start():
-        if True : #Before while
+    writing_temp_var = False
+    temp_var = {}
 
-            main.layers = {
-                "buttons" : Layer(),
-                "carrots" : Layer(),
-                "cows" : Layer(),
-                "JPs" : Layer(),
-                "hutte" : Layer(),
-            }
-            main.layers["hutte"].surf.blit(main.hutte, main.hutte_rect)
 
-            main.list_of_JP.append(JP())
+def Start():
+    # region Before_whiles
+    main.layers = {
+        "buttons" : Layer(),
+        "carrots" : Layer(),
+        "cows" : Layer(),
+        "JPs" : Layer(),
+        "hutte" : Layer(),
+    }
+    main.layers["hutte"].surf.blit(main.hutte, main.hutte_rect)
 
-        if True : # While Threads
-            tick = th.Thread(target=SecondaryThreads.ticking)
-            tick.start()
+    main.list_of_JP.append(JP())
+    # endregion
 
-            display = th.Thread(target=SecondaryThreads.general_display)
-            display.start()
+    # region While_Threads
+    tick = th.Thread(target=SecondaryThreads.ticking)
+    tick.start()
 
-            display_buttons = th.Thread(target=SecondaryThreads.button_display)
-            display_buttons.start()
-            
-            display_JP = th.Thread(target=SecondaryThreads.JP_display)
-            display_JP.start()
+    display = th.Thread(target=SecondaryThreads.general_display)
+    display.start()
 
-            display_carrots = th.Thread(target=SecondaryThreads.carrot_display)
-            display_carrots.start()
+    display_buttons = th.Thread(target=SecondaryThreads.button_display)
+    display_buttons.start()
+    
+    display_JP = th.Thread(target=SecondaryThreads.JP_display)
+    display_JP.start()
 
-            display_cow = th.Thread(target=SecondaryThreads.cow_display)
-            display_cow.start()
+    display_carrots = th.Thread(target=SecondaryThreads.carrot_display)
+    display_carrots.start()
 
-            if Settings["carrots"]["activated"]:
-                carrot_summon = th.Thread(target=SecondaryThreads.carrot_summon)
-                carrot_summon.start()
+    display_cow = th.Thread(target=SecondaryThreads.cow_display)
+    display_cow.start()
 
-            if Settings["selfishness"]["activated"]:
-                cow_summon = th.Thread(target=SecondaryThreads.cow_summon)
-                cow_summon.start()
+    if Settings["carrots"]["activated"]:
+        carrot_summon = th.Thread(target=SecondaryThreads.carrot_summon)
+        carrot_summon.start()
 
-            time_bot = th.Thread(target=SecondaryThreads.hour_gestionnary)
-            time_bot.start()
+    if Settings["selfishness"]["activated"]:
+        cow_summon = th.Thread(target=SecondaryThreads.cow_summon)
+        cow_summon.start()
 
-            free_JPs_getter = th.Thread(target=SecondaryThreads.get_free_JPs)
-            free_JPs_getter.start()
+    time_bot = th.Thread(target=SecondaryThreads.hour_gestionnary)
+    time_bot.start()
 
-            json_save = th.Thread(target=SecondaryThreads.save_dev_vars)
-            json_save.start()
+    free_JPs_getter = th.Thread(target=SecondaryThreads.get_free_JPs)
+    free_JPs_getter.start()
 
-            #Remember that the following while is another thread, the main thread
-            
-        while main.running : 
+    InfoDisplay = th.Thread(target=SecondaryThreads.display_data)
+    InfoDisplay.start()
+    #endregion
+        
+    while main.running :# Remember that the following while is another thread, the main thread 
             main.wait_next_tick.wait()
-            if True: #interactions
-                main.KeyDown = []
-                main.KeyUp = []
-                for event in pyg.event.get():
-                    if event.type == pyg.QUIT:
-                        main.running = False
-                        print("end")
-                    elif event.type == pyg.KEYDOWN:
-                        main.KeyDown.append(event.key)
-                        main.KeyDown.append(event.key)
-                    elif event.type == pyg.KEYUP:
-                        main.KeyUp.append(event.key)
-                    elif event.type == pyg.MOUSEBUTTONDOWN:
-                        if event.button == 1 :
-                            main.Mouse[0] = "down"
-                        elif event.button == 3 :
-                            main.Mouse[1] = "down"
-                        main.KeyDown.append(event.button)
-                    elif event.type == pyg.MOUSEBUTTONUP:
-                        if event.button == 1 :
-                            main.Mouse[0] = "up"
-                        elif event.button == 3 :
-                            main.Mouse[1] = "up"
-                        main.KeyUp.append(event.button)
+            main.KeyDown = []
+            main.KeyUp = []
+            for event in pyg.event.get():
+                if event.type == pyg.QUIT:
+                    main.running = False
+                    print("end")
+                elif event.type == pyg.KEYDOWN:
+                    main.KeyDown.append(event.key)
+                    main.KeyDown.append(event.key)
+                elif event.type == pyg.KEYUP:
+                    main.KeyUp.append(event.key)
+                elif event.type == pyg.MOUSEBUTTONDOWN:
+                    if event.button == 1 :
+                        main.Mouse[0] = "down"
+                    elif event.button == 3 :
+                        main.Mouse[1] = "down"
+                    main.KeyDown.append(event.button)
+                elif event.type == pyg.MOUSEBUTTONUP:
+                    if event.button == 1 :
+                        main.Mouse[0] = "up"
+                    elif event.button == 3 :
+                        main.Mouse[1] = "up"
+                    main.KeyUp.append(event.button)
             
 
 class SecondaryThreads():
@@ -361,13 +368,12 @@ class SecondaryThreads():
         while main.running:
             main.wait_next_tick.wait()
             if main.list_of_cows.__len__()<Settings["selfishness"]["cows"]["max number"]:
-                print(main.list_of_cows.__len__())
-                Wait()
                 functions.Summon_A_Cow()
-            elif None in main.list_of_cows:
                 Wait()
+            elif None in main.list_of_cows:
                 index = main.list_of_cows.index(None)
                 functions.Summon_A_Cow(index = index, replace = True)
+                Wait()
 
     def hour_gestionnary():
         while main.running:
@@ -379,6 +385,8 @@ class SecondaryThreads():
                 functions.activate_filter(main.filter_names["Night"])
                 functions.wait_for_ticks(Settings["night time"])
                 functions.reproduction()
+                functions.save_dev_vars()
+                RepresentFileApp._instance.__init__(tempVarfile)
                 functions.unactivate_filter(main.filter_names["Night"])
                 main.hour = "dawn"
             elif main.hour == "dawn":
@@ -395,60 +403,10 @@ class SecondaryThreads():
                 free += not jp.occuped
             main.free_JPs = free
 
-    def save_dev_vars():
+    def display_data():
+        temp_var_reader = RepresentFileApp(tempVarfile)
+        temp_var_reader.mainloop()
 
-        class caracteristic_of_jp:
-            def __init__(self, name : str) -> None:
-                self.name = name
-                self.values : List[int] = []
-                self.average : float = 0.0
-                self.median : float = 0.0
-                self.variance : float = 0.0
-                self.calc()
-
-            def calc(self):
-
-                self.values = []
-                for jp in main.list_of_JP:           #List of values
-                    self.values.append(getattr(jp.caracteristics, self.name, None)) 
-
-                self.average = sum(self.values)/self.values.__len__()   #Average
-
-                median_index = (self.values.__len__()-1)/2
-                if median_index == (self.values.__len__()-1)//2:
-                    self.median = self.values[round(median_index)]         #Median
-                else:
-                    self.median = (sum(self.values[floor(median_index): ceil(median_index)+1]))/2 
-
-                self.variance = 0.0
-                for value in self.values:
-                    self.variance += (value - self.average)**2
-                self.variance /= self.values.__len__()
-
-            def get_dict(self) -> dict:
-                self.calc()
-                returned : dict = {
-                    "list": self.values,
-                    "average" : self.average,
-                    "median" : self.median,
-                    "variance" : self.variance,
-                }
-                return returned
-
-        selfishness = caracteristic_of_jp("selfishness")
-
-        with open(tempVarfile, "r") as File_r:
-            File_r = json.load(File_r)
-            while main.running:
-                main.wait_next_tick.wait()
-                
-                File_r["selfishness"] = selfishness.get_dict()
-
-                main.temp_var = File_r
-                main.writing_temp_var = True
-                with open(tempVarfile, "w") as File_w:
-                    json.dump(File_r, File_w, indent=4)
-                main.writing_temp_var = False
 
 class TertiaryThreads():
     def JP_collider(self : JP):
@@ -492,7 +450,7 @@ class TertiaryThreads():
                 objective = functions.Generate_Random_Pos(Vector2((150, 100)), main.screen_size, True)
                 set_objective = False
             if not self.imobilisated:
-                self.move_of(objective - self.pos, Settings["selfishness"]["cows"]["move speed"] * main.screen_size.norm()/100)
+                self.move_of(objective - self.pos, Settings["selfishness"]["cows"]["move speed"] * main.screen_size.norm()/200)
             if self.rect.collidepoint(objective.tuple()):
                 set_objective = True
     
@@ -573,7 +531,7 @@ class functions():
             final_value = value
         functions.update_temp_var(final_value)
 
-    def Generate_Random_Pos(cases : Vector2, final_size : Union[Vector2, None] = None, rounded : bool = False, only_edges : bool = False)->Vector2:
+    def Generate_Random_Pos(cases : Vector2, final_size : Vector2 | None = None, rounded : bool = False, only_edges : bool = False)->Vector2:
         if only_edges:
             if random.random() <= cases.x/(cases.y+cases.x): # Positives_issues/total_issues.
                 x = random.randint(0, cases.x-1)
@@ -593,13 +551,13 @@ class functions():
             returned.y = round(returned.y)
         return returned
 
-    def Summon_A_Carrot(pos : Union[Vector2, None] = None):
+    def Summon_A_Carrot(pos : Vector2 | None = None):
         if pos is None:
             pos = functions.Generate_Random_Pos(Vector2((150, 100)), main.screen_size, True)
         main.list_of_carrots.append(Sprite(functions.re_get_surf(main.Carrot_surf)))
         main.list_of_carrots[-1].move(pos)
 
-    def Summon_A_Cow(pos : Union[Vector2, None] = None, index : int | None = None, replace : bool = False): 
+    def Summon_A_Cow(pos : Vector2 | None = None, index : int | None = None, replace : bool = False): 
         if index == None:
             index = main.list_of_cows.__len__()
         if pos is None:
@@ -663,12 +621,76 @@ class functions():
                 main.JP_brains.pop(i)
                 main.JP_colliders.pop(i)
                 del jp
+        if main.list_of_JP.__len__() == 0:
+            main.running = False
 
+    def save_dev_vars():
 
-main.Start()
+        class caracteristic_of_jp:
+            def __init__(self, name : str) -> None:
+                self.name = name
+                self.values : List[int] = []
+                self.average : float | None = 0.0
+                self.median : float | None = 0.0
+                self.variance : float | None = 0.0
+                self.calc()
+
+            def calc(self):
+
+                self.values = []
+                for jp in main.list_of_JP:           #List of values
+                    self.values.append(getattr(jp.caracteristics, self.name, None))
+
+                lenght = self.values.__len__()
+
+                if lenght == 0:
+                    self.average = None
+                    self.median = None      #No Stats
+                    self.variance = None
+                else:
+                    self.average = sum(self.values)/lenght   #Average
+                
+                    median_index = (lenght-1)/2
+                    if median_index == (lenght-1)//2:
+                        self.median = self.values[round(median_index)]         #Median
+                    else:
+                        self.median = (sum(self.values[floor(median_index): ceil(median_index)+1]))/2 
+
+                    self.variance = 0.0
+                    for value in self.values:                       #variance
+                        self.variance += (value - self.average)**2
+                    self.variance /= lenght
+
+            def get_dict(self) -> dict:
+                self.calc()
+                returned : dict = {
+                    "list": self.values,
+                    "average" : self.average,
+                    "median" : self.median,
+                    "variance" : self.variance,
+                }
+                return returned
+
+        selfishness = caracteristic_of_jp("selfishness")
+
+        with open(tempVarfile, "r") as File_r:
+            File_r = json.load(File_r)
+                
+            File_r["selfishness"] = selfishness.get_dict()
+
+            main.temp_var = File_r
+            main.writing_temp_var = True
+            with open(tempVarfile, "w") as File_w:
+                json.dump(File_r, File_w, indent=4)
+            main.writing_temp_var = False
+
+# region bottom
+Start()
 
 try:
     os.remove(tempVarfile)
     print(f"deleted file : {tempVarfile}")
 except:
     pass
+
+# endregion
