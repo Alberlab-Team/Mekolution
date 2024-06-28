@@ -386,7 +386,7 @@ class SecondaryThreads():
                 functions.wait_for_ticks(Settings["night time"])
                 functions.reproduction()
                 functions.save_dev_vars()
-                RepresentFileApp._instance.__init__(tempVarfile)
+                RepresentFileApp._instance.display_json
                 functions.unactivate_filter(main.filter_names["Night"])
                 main.hour = "dawn"
             elif main.hour == "dawn":
