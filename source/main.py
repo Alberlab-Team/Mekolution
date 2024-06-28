@@ -350,7 +350,7 @@ class SecondaryThreads():
 
     def ticking():
         while main.running:
-            time.sleep(0.05)
+            time.sleep(0.09)
             main.wait_next_tick.set()
             main.wait_next_tick.clear()
 
@@ -386,7 +386,9 @@ class SecondaryThreads():
                 functions.wait_for_ticks(Settings["night time"])
                 functions.reproduction()
                 functions.save_dev_vars()
-                RepresentFileApp._instance.display_json
+                try:
+                    RepresentFileApp._instance.display_json()
+                except:...
                 functions.unactivate_filter(main.filter_names["Night"])
                 main.hour = "dawn"
             elif main.hour == "dawn":
@@ -404,8 +406,7 @@ class SecondaryThreads():
             main.free_JPs = free
 
     def display_data():
-        temp_var_reader = RepresentFileApp(tempVarfile)
-        temp_var_reader.mainloop()
+        RepresentFileApp(tempVarfile).mainloop()
 
 
 class TertiaryThreads():
@@ -625,7 +626,6 @@ class functions():
             main.running = False
 
     def save_dev_vars():
-
         class caracteristic_of_jp:
             def __init__(self, name : str) -> None:
                 self.name = name
@@ -686,6 +686,10 @@ class functions():
 
 # region bottom
 Start()
+for thread in th.enumerate():
+    del thread
+    
+RepresentFileApp._instance.running = False
 
 try:
     os.remove(tempVarfile)

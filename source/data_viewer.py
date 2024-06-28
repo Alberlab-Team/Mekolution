@@ -5,6 +5,7 @@ from tkinter import ttk
 class RepresentFileApp(tk.Tk):
     _instance = None
 
+
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
             cls._instance = super(RepresentFileApp, cls).__new__(cls)
@@ -49,10 +50,22 @@ class RepresentFileApp(tk.Tk):
         # Add a button to update the JSON data
         update_button = ttk.Button(self, text="Update", command=self.display_json)
         update_button.pack(pady=10)
+
+        self.running = True
         
         # Display JSON data
         self.display_json()
         self.update_scroll_region()
+
+        # A little bit simple to understand no ?
+        self.checkForStop()
+
+    def checkForStop(self):
+            if self.running:
+                self.after(1000, self.checkForStop)
+            else:
+                print("data viewer singleton will be destroyed. Don't worry if you recive a Tcl_AcyncDelete log from there to 1~2 s")
+                self.destroy()
 
     def update_scroll_region(self):
         self.canvas.update_idletasks()  # Ensure all widgets are properly managed
